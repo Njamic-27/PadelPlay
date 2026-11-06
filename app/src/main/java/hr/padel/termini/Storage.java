@@ -11,6 +11,9 @@ import java.nio.charset.StandardCharsets;
 final class Storage {
     static final String PREFS = "padel";
     private static final String KEY = "termini";
+    private static final String KEY_REM = "podsjetnici";
+    /** Shared reminder leads in minutes; default is the old behaviour: 1 day and 1 hour before. */
+    private static final String DEFAULT_REM = "[1440,60]";
 
     private Storage() {}
 
@@ -26,6 +29,14 @@ final class Storage {
 
     static synchronized void save(Context c, String json) {
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, json).apply();
+    }
+
+    static synchronized String loadReminders(Context c) {
+        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_REM, DEFAULT_REM);
+    }
+
+    static synchronized void saveReminders(Context c, String json) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_REM, json).apply();
     }
 
     /** First start: the termini copied from the notepad. */

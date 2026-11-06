@@ -105,6 +105,19 @@ input[type=date],input[type=time],input[type=text]{width:100%;box-sizing:border-
 .btn.danger{color:var(--crvena);flex:0 0 auto}
 .btn.danger.armed{background:var(--crvena);border-color:var(--crvena);color:#fff;flex:1}
 .err{color:var(--crvena);font-size:13px}
+.tool.icon{padding:7px 9px}
+.opt.x::after{content:"×";margin-left:6px;color:var(--muted);font-weight:400}
+.opt .sub{color:var(--muted);font-weight:400;font-size:13px}
+.custom{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px}
+.custom label{display:grid;gap:4px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.custom input{width:84px;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;font-size:16px;min-height:46px}
+.custom .btn{flex:0 0 auto;min-height:46px}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+.rem{display:inline-flex;align-items:center;gap:3px}
+.rem svg{width:12px;height:12px}
+.ovr{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px}
+.ovr button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-weight:600;padding:8px 12px}
+.ovr button.armed{background:var(--crvena);border-color:var(--crvena);color:#fff}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
 </style>
 </head>
@@ -113,6 +126,7 @@ input[type=date],input[type=time],input[type=text]{width:100%;box-sizing:border-
   <header>
     <div class="top"><h1>Padel termini</h1>
       <div class="tools">
+        <button type="button" class="tool icon" id="remBtn" aria-label="Obavijesti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button>
         <button type="button" class="tool" id="filterBtn" aria-label="Filteri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter<span class="badge" id="filterBadge" hidden></span></button>
         <button type="button" class="tool" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>Izvoz</button>
       </div></div>
@@ -139,6 +153,12 @@ input[type=date],input[type=time],input[type=text]{width:100%;box-sizing:border-
       <input type="text" id="fLocOther" placeholder="Upiši lokaciju" hidden></div>
     <div class="f"><label for="fWho">Protivnici / napomena</label><input type="text" id="fWho" placeholder="npr. stipe/fran" autocomplete="off"></div>
     <div class="f"><span class="lbl" id="tagLbl">Oznaka</span><div class="opts" role="radiogroup" aria-labelledby="tagLbl" id="fTags"></div></div>
+    <div class="f"><span class="lbl" id="remLbl">Obavijesti</span>
+      <div class="opts" role="radiogroup" aria-labelledby="remLbl" id="fRemMode">
+        <button type="button" class="opt" role="radio" data-v="all">Kao za sve <span class="sub" id="fRemAll"></span></button>
+        <button type="button" class="opt" role="radio" data-v="own">Prilagodi</button>
+      </div>
+      <div id="fRemPick" hidden></div></div>
     <p class="err" id="fErr" hidden></p>
     <div class="actions">
       <button type="button" class="btn danger" id="delBtn" hidden>Obriši</button>
@@ -180,6 +200,17 @@ input[type=date],input[type=time],input[type=text]{width:100%;box-sizing:border-
   </div>
 </div>
 
+<div class="scrim" id="rScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rTitle">
+    <div class="grab"></div>
+    <h2 id="rTitle">Obavijesti</h2>
+    <p class="ok">Koliko prije termina želiš podsjetnik. Vrijedi za sve termine, a pojedinom terminu možeš u uređivanju postaviti drukčije.</p>
+    <div class="f"><span class="lbl">Podsjeti me prije termina</span><div id="rPick"></div></div>
+    <div class="ovr" id="rOv" hidden><span id="rOvText"></span><button type="button" id="rOvReset">Vrati na zajedničko</button></div>
+    <div class="actions"><button type="button" class="btn primary" id="rDone">Gotovo</button></div>
+  </div>
+</div>
+
 <script>
 (function(){
 // k = ključ spremljen u podacima (ne mijenjati zbog postojećih termina), c = boja
@@ -197,7 +228,61 @@ const DAYS_FULL=["nedjelja","ponedjeljak","utorak","srijeda","četvrtak","petak"
 const tagOf=k=>TAGS.find(t=>t.k===k)||TAGS[0];
 const $=id=>document.getElementById(id);
 
-let items=[];        // {id,date,time,loc,who,tag}
+/* ---------- reminder leads (minutes before a termin) ---------- */
+const PRESETS=[30,60,120,180,1440,2880];
+const DEFAULT_REM=[1440,60];
+const MAX_LEAD=30*1440;
+const BELL_SM=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+const sortLeads=v=>[...new Set(v)].sort((a,b)=>b-a);
+function fmtLead(m){
+  const d=Math.floor(m/1440),h=Math.floor(m%1440/60),n=m%60,p=[];
+  if(d)p.push(d===1?"1 dan":d+" dana");if(h)p.push(h+" h");if(n)p.push(n+" min");
+  return p.join(" ");
+}
+const fmtShort=v=>v.length?sortLeads(v).map(fmtLead).join(", "):"bez obavijesti";
+// Chips for presets + own values, and a "+ Drugo" row for days/hours
+function remPicker(host,get,set,label){
+  let open=false;
+  function draw(){
+    const vals=get();host.textContent="";
+    const o=document.createElement("div");o.className="opts";o.setAttribute("role","group");o.setAttribute("aria-label",label);
+    [...new Set([...PRESETS,...vals])].sort((a,b)=>a-b).forEach(m=>{
+      const own=!PRESETS.includes(m),on=vals.includes(m);
+      const b=document.createElement("button");b.type="button";b.className="opt"+(own?" x":"");
+      b.setAttribute("role","checkbox");b.setAttribute("aria-checked",on?"true":"false");
+      b.textContent=fmtLead(m);if(own)b.setAttribute("aria-label",fmtLead(m)+" prije, ukloni");
+      b.onclick=()=>{set(on?vals.filter(v=>v!==m):sortLeads([...vals,m]));draw()};
+      o.appendChild(b);
+    });
+    const more=document.createElement("button");more.type="button";more.className="opt";
+    more.textContent=open?"Zatvori":"+ Drugo";more.setAttribute("aria-expanded",open?"true":"false");
+    more.onclick=()=>{open=!open;draw();if(open)host.querySelector("input").focus()};
+    o.appendChild(more);host.appendChild(o);
+    if(open){
+      const c=document.createElement("div");c.className="custom";
+      c.innerHTML=`<label>Dana<input type="number" inputmode="numeric" min="0" max="30" placeholder="0"></label><label>Sati<input type="number" inputmode="numeric" min="0" placeholder="0"></label><button type="button" class="btn">Dodaj</button>`;
+      const [di,hi]=c.querySelectorAll("input");
+      const err=document.createElement("p");err.className="err";err.hidden=true;
+      const add=()=>{
+        const d=Math.floor(Number(di.value)||0),h=Math.floor(Number(hi.value)||0),m=d*1440+h*60;
+        if(d<0||h<0||m<=0){err.textContent="Upiši barem 1 sat ili 1 dan.";err.hidden=false;return}
+        if(m>MAX_LEAD){err.textContent="Najviše 30 dana prije.";err.hidden=false;return}
+        if(!vals.includes(m))set(sortLeads([...vals,m]));
+        open=false;draw();
+      };
+      c.querySelector("button").onclick=add;
+      c.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();add()}});
+      host.appendChild(c);host.appendChild(err);
+    }
+    const hint=document.createElement("p");hint.className="hint";
+    hint.textContent=vals.length?`Podsjetnik ${fmtShort(vals)} prije termina.`:"Bez obavijesti.";
+    host.appendChild(hint);
+  }
+  return{draw,reset(){open=false}};
+}
+
+let items=[];        // {id,date,time,loc,who,tag,rem?}  rem = vlastite obavijesti (minute prije), bez rem = zajedničke
+let remAll=[...DEFAULT_REM];
 let tagSet=new Set(), locSet=new Set(), dFrom="", dTo="", showPast=false, loaded=false;
 const NOLOC="__none";
 let store=null;      // db collection or local fallback
@@ -271,6 +356,7 @@ function render(){
     const meta=r.querySelector(".meta");
     if(i.loc){const s=document.createElement("span");s.className="loc";s.textContent=i.loc;meta.appendChild(s)}
     const tg=document.createElement("span");tg.className="tag";tg.textContent=t.label;meta.appendChild(tg);
+    if(Array.isArray(i.rem)){const s=document.createElement("span");s.className="rem";s.innerHTML=BELL_SM;s.append(fmtShort(i.rem));meta.appendChild(s)}
     r.setAttribute("aria-label",`${DAYS_FULL[d.getDay()]} ${dm(d)} ${i.time||""} ${i.loc||""} ${i.who||""}, ${t.label}. Uredi`);
     r.onclick=()=>openForm(i);
     list.appendChild(r);
@@ -349,6 +435,15 @@ $("eShare").onclick=()=>{window.Android&&window.Android.shareText($("eText").val
 /* ---------- form ---------- */
 let editing=null, fLoc="", fTag="plavo", delArmed=false;
 let draft=null;      // zapamćen unos novog termina nakon zatvaranja povlačenjem
+let fRem=null;       // null = kao za sve, polje = vlastite obavijesti
+const formPicker=remPicker($("fRemPick"),()=>fRem||[],v=>{fRem=v},"Obavijesti za ovaj termin");
+function syncRem(){
+  $("fRemAll").textContent=`(${fmtShort(remAll)})`;
+  $("fRemMode").querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-checked",(b.dataset.v==="own")===(fRem!==null)?"true":"false"));
+  $("fRemPick").hidden=fRem===null;
+  if(fRem!==null)formPicker.draw();
+}
+$("fRemMode").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{fRem=b.dataset.v==="own"?(fRem||[...remAll]):null;syncRem()});
 function buildOpts(){
   const L=$("fLocs");L.textContent="";
   [...LOCS,"Drugo"].forEach(name=>{
@@ -386,8 +481,9 @@ function openForm(item){
   const d=item?null:draft;
   if(d){
     $("fDate").value=d.date;$("fTime").value=d.time;fLoc=d.loc;
-    $("fLocOther").value=d.locOther;$("fWho").value=d.who;fTag=d.tag;
+    $("fLocOther").value=d.locOther;$("fWho").value=d.who;fTag=d.tag;fRem=d.rem;
   }else{
+    fRem=item&&Array.isArray(item.rem)?[...item.rem]:null;
     $("fDate").value=item?item.date:todayISO();
     $("fTime").value=item?(item.time||""):"19:30";
     fLoc=item?(item.loc||""):"";
@@ -397,11 +493,11 @@ function openForm(item){
   }
   $("delBtn").hidden=!item;$("delBtn").classList.remove("armed");$("delBtn").textContent="Obriši";
   $("fErr").hidden=true;
-  showDay();syncOpts();
+  showDay();syncOpts();formPicker.reset();syncRem();
   $("scrim").hidden=false;
 }
 function closeForm(){$("scrim").hidden=true;editing=null}
-function readForm(){return{date:$("fDate").value,time:$("fTime").value,loc:fLoc,locOther:$("fLocOther").value,who:$("fWho").value,tag:fTag}}
+function readForm(){return{date:$("fDate").value,time:$("fTime").value,loc:fLoc,locOther:$("fLocOther").value,who:$("fWho").value,tag:fTag,rem:fRem?[...fRem]:null}}
 // Povlačenje dolje / tap izvan / natrag: zatvori, ali zapamti unos novog termina
 function dismissForm(){if(!editing)draft=readForm();closeForm()}
 // Odustani: zatvori i zaboravi unos
@@ -409,7 +505,7 @@ function cancelForm(){if(!editing)draft=null;closeForm()}
 $("addBtn").onclick=()=>openForm(null);
 $("cancelBtn").onclick=cancelForm;
 $("scrim").addEventListener("click",e=>{if(e.target===$("scrim"))dismissForm()});
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("scrim").hidden)dismissForm();$("fScrim").hidden=true;$("eScrim").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("scrim").hidden)dismissForm();$("fScrim").hidden=true;$("eScrim").hidden=true;$("rScrim").hidden=true});
 function fail(msg){$("fErr").textContent=msg;$("fErr").hidden=false}
 $("form").addEventListener("submit",async e=>{
   e.preventDefault();
@@ -419,6 +515,7 @@ $("form").addEventListener("submit",async e=>{
   let loc=fLoc;
   if(loc&&!LOCS.includes(loc))loc=$("fLocOther").value.trim();
   const data={date,time:$("fTime").value||"",loc:loc||"",who:$("fWho").value.trim(),tag:fTag};
+  if(fRem!==null)data.rem=sortLeads(fRem);
   try{
     if(editing)await store.save(editing.id,data);else{await store.add(data);draft=null}
     closeForm();
@@ -433,22 +530,30 @@ $("delBtn").onclick=async()=>{
 function localStore(){
   const read=()=>{try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch(e){return[]}};
   const write=a=>{try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}};
+  const getRem=()=>{try{const v=JSON.parse(localStorage.getItem(LS+"-rem"));return Array.isArray(v)?v:[...DEFAULT_REM]}catch(e){return[...DEFAULT_REM]}};
+  const setRem=v=>{try{localStorage.setItem(LS+"-rem",JSON.stringify(v))}catch(e){}};
   const sync=()=>{const a=read(),t=todayISO(),k=a.filter(i=>i.date>=t);if(k.length!==a.length)write(k);items=k;loaded=true;render()};
   return{
     add:async d=>{const a=read();a.push({...d,id:"l"+Date.now().toString(36)});write(a);sync()},
     save:async(id,d)=>{write(read().map(i=>i.id===id?{...d,id}:i));sync()},
     remove:async id=>{write(read().filter(i=>i.id!==id));sync()},
+    getRem,setRem,
+    clearRem:async()=>{write(read().map(({rem,...i})=>i));sync()},
     start:sync
   };
 }
 function nativeStore(){
   const read=()=>{try{return JSON.parse(window.Android.load())||[]}catch(e){return[]}};
   const write=a=>window.Android.save(JSON.stringify(a));
+  const getRem=()=>{try{const v=JSON.parse(window.Android.getReminders());return Array.isArray(v)?v:[...DEFAULT_REM]}catch(e){return[...DEFAULT_REM]}};
+  const setRem=v=>window.Android.setReminders(JSON.stringify(v));
   const sync=()=>{const a=read(),t=todayISO(),k=a.filter(i=>i.date>=t);if(k.length!==a.length)write(k);items=k;loaded=true;render()};
   return{
     add:async d=>{const a=read();a.push({...d,id:"l"+Date.now().toString(36)});write(a);sync()},
     save:async(id,d)=>{write(read().map(i=>i.id===id?{...d,id}:i));sync()},
     remove:async id=>{write(read().filter(i=>i.id!==id));sync()},
+    getRem,setRem,
+    clearRem:async()=>{write(read().map(({rem,...i})=>i));sync()},
     start:sync
   };
 }
@@ -459,7 +564,25 @@ function checkNotif(){
 }
 $("notifBtn").onclick=()=>window.Android&&window.Android.openNotificationSettings();
 window.onAppResume=()=>{checkNotif();if(loaded&&$("scrim").hidden)render()};
-window.handleBack=()=>{if(!$("scrim").hidden){dismissForm();return true}if(!$("fScrim").hidden){$("fScrim").hidden=true;return true}if(!$("eScrim").hidden){$("eScrim").hidden=true;return true}return false};
+window.handleBack=()=>{if(!$("scrim").hidden){dismissForm();return true}if(!$("fScrim").hidden){$("fScrim").hidden=true;return true}if(!$("eScrim").hidden){$("eScrim").hidden=true;return true}if(!$("rScrim").hidden){$("rScrim").hidden=true;return true}return false};
+
+/* ---------- shared reminder settings ---------- */
+const setPicker=remPicker($("rPick"),()=>remAll,v=>{remAll=v;store&&store.setRem(v)},"Zajedničke obavijesti");
+let ovArmed=false;
+function syncOv(){
+  const n=items.filter(i=>Array.isArray(i.rem)).length;
+  $("rOv").hidden=!n;
+  $("rOvText").textContent=`Vlastite obavijesti ima ${n} ${n===1?"termin":"termina"}.`;
+  $("rOvReset").classList.toggle("armed",ovArmed);
+  $("rOvReset").textContent=ovArmed?"Sigurno vrati":"Vrati na zajedničko";
+}
+$("remBtn").onclick=()=>{ovArmed=false;setPicker.reset();setPicker.draw();syncOv();$("rScrim").hidden=false};
+$("rDone").onclick=()=>{$("rScrim").hidden=true};
+$("rScrim").addEventListener("click",e=>{if(e.target===$("rScrim"))$("rScrim").hidden=true});
+$("rOvReset").onclick=async()=>{
+  if(!ovArmed){ovArmed=true;syncOv();return}
+  ovArmed=false;await store.clearRem();syncOv();
+};
 
 /* ---------- swipe down to close ---------- */
 function swipeToClose(scrim,onClose){
@@ -506,10 +629,12 @@ function swipeToClose(scrim,onClose){
 swipeToClose($("scrim"),dismissForm);
 swipeToClose($("fScrim"),()=>{$("fScrim").hidden=true});
 swipeToClose($("eScrim"),()=>{$("eScrim").hidden=true});
+swipeToClose($("rScrim"),()=>{$("rScrim").hidden=true});
 
 buildOpts();render();
 if(window.Android){store=nativeStore();checkNotif()}
 else{store=localStore();note("Pregled u pregledniku: termini se spremaju samo ovdje.")}
+remAll=store.getRem();
 store.start();
 })();
 </script>

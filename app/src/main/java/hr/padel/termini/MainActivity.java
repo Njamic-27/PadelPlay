@@ -136,6 +136,18 @@ public class MainActivity extends Activity {
             Scheduler.rescheduleAll(MainActivity.this);
         }
 
+        /** Shared reminder leads (minutes before a termin) as a JSON array. */
+        @JavascriptInterface
+        public String getReminders() {
+            return Storage.loadReminders(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void setReminders(String json) {
+            Storage.saveReminders(MainActivity.this, Scheduler.sanitizeLeads(json));
+            Scheduler.rescheduleAll(MainActivity.this);
+        }
+
         @JavascriptInterface
         public boolean notificationsOn() {
             NotificationManager nm = getSystemService(NotificationManager.class);
