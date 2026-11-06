@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="page_bg">#EEF2F0</color>
+    <color name="brand">#1C5FC4</color>
+    <color name="icon_bg">#1C5FC4</color>
+    <color name="icon_fg">#FFFFFF</color>
+    <color name="icon_ball">#E8BE00</color>
+    <bool name="light_bars">true</bool>
+    <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/page_bg</item>
+        <item name="android:colorAccent">@color/brand</item>
+        <item name="android:colorPrimary">@color/brand</item>
+    </style>
+</resources>

@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Padel termini</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+/* Layout: one column of court-card rows grouped by week, sticky header with legend filters, floating add button, bottom sheet form */
+:root{
+  --bg:#EEF2F0; --surface:#FFFFFF; --fg:#14201B; --muted:#5E6E67; --line:#D6DED9; --accent:#1C5FC4;
+  --siva:#8A948F; --zelena:#2E9E4F; --narancasta:#EE7417; --plava:#2F6FE0; --crvena:#DC343A; --zuta:#E8BE00;
+  --tint:16%;
+  --display:"Roboto Condensed","sans-serif-condensed","Arial Narrow",sans-serif;
+  --body:Roboto,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1513; --surface:#17201D; --fg:#E8EFEB; --muted:#93A39C; --line:#2A3632; --accent:#6EA0FF;
+  --siva:#8E9A94; --zelena:#4CC46E; --narancasta:#FF8F3A; --plava:#5B8FF2; --crvena:#F05A5E; --zuta:#F5D43A; --tint:22%; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1513; --surface:#17201D; --fg:#E8EFEB; --muted:#93A39C; --line:#2A3632; --accent:#6EA0FF;
+  --siva:#8E9A94; --zelena:#4CC46E; --narancasta:#FF8F3A; --plava:#5B8FF2; --crvena:#F05A5E; --zuta:#F5D43A; --tint:22%; color-scheme:dark}
+
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 10px;display:grid;gap:10px;border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:.01em;margin:0;text-transform:uppercase}
+.top small{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:6px;flex:none}
+.tool{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 11px;font-size:13px;font-weight:600}
+.tool svg{width:16px;height:16px}
+.tool .badge{background:var(--accent);color:#fff;border-radius:999px;font-size:11px;min-width:18px;height:18px;display:inline-grid;place-items:center;padding:0 5px}
+.top h1{flex:1;min-width:0}
+.fsum{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
+.fsum button{background:none;border:0;color:var(--accent);font-weight:600;padding:2px 0}
+.exp{color:var(--fg);box-sizing:border-box;width:100%;min-height:220px;max-height:50vh;resize:vertical;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;font-family:ui-monospace,"Roboto Mono",monospace;font-size:13px;line-height:1.55;white-space:pre}
+.ok{color:var(--muted);font-size:13px;min-height:1em}
+.legend{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.legend::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:500;white-space:nowrap}
+.chip .dot{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.chip[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) var(--tint),var(--surface))}
+.chip .n{color:var(--muted);font-variant-numeric:tabular-nums}
+
+.pastbtn{justify-self:start;background:none;border:0;color:var(--muted);font-size:13px;padding:2px 0;text-decoration:underline;text-underline-offset:3px}
+
+.week{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:18px 2px 6px;display:flex;gap:8px;align-items:center}
+.week::after{content:"";flex:1;height:1px;background:var(--line)}
+.list{display:grid;gap:6px}
+
+.row{--c:var(--siva);display:grid;grid-template-columns:56px 50px minmax(0,1fr);align-items:center;gap:10px;width:100%;text-align:left;border:0;border-left:6px solid var(--c);border-radius:10px;padding:10px 12px 10px 10px;background:color-mix(in srgb,var(--c) var(--tint),var(--surface));min-height:58px}
+.row:active{filter:brightness(.97)}
+.row.past{opacity:.5}
+.row.today{box-shadow:inset 0 0 0 2px var(--c)}
+.d{display:grid;line-height:1}
+.d b{font-family:var(--display);font-weight:700;font-size:22px;font-variant-numeric:tabular-nums}
+.d span{font-size:12px;color:var(--muted);margin-top:3px;text-transform:lowercase}
+.t{font-family:var(--display);font-weight:600;font-size:19px;font-variant-numeric:tabular-nums}
+.m{min-width:0;display:grid;gap:3px}
+.who{font-weight:600;overflow-wrap:anywhere}
+.who.empty{color:var(--muted);font-weight:400;font-style:italic}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.loc{font-weight:600;color:var(--fg);background:var(--surface);border-radius:4px;padding:1px 6px}
+.tag{display:inline-flex;align-items:center;gap:4px}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+
+.state{color:var(--muted);text-align:center;padding:40px 12px;line-height:1.5}
+.state b{color:var(--fg);display:block;font-size:16px;margin-bottom:4px}
+.note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
+.banner{display:flex;gap:10px;align-items:center;justify-content:space-between;background:color-mix(in srgb,var(--crvena) var(--tint),var(--surface));border-radius:10px;padding:10px 12px;font-size:13px}
+.banner button{flex:none;border:0;border-radius:8px;background:var(--crvena);color:#fff;font-weight:600;padding:8px 12px}
+
+.fab{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:6;height:56px;padding:0 22px 0 18px;border-radius:28px;border:0;background:var(--accent);color:#fff;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent)}
+.fab svg{width:22px;height:22px}
+
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.42);display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:640px;max-height:92%;overflow-y:auto;background:var(--surface);border-radius:18px 18px 0 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);justify-self:center}
+.sheet{overscroll-behavior:contain}
+.sheet.dragging{animation:none}
+.sheet h2{font-family:var(--display);font-size:22px;font-weight:700;text-transform:uppercase;margin:0}
+.f{display:grid;gap:6px}
+.f > label,.f > .lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px}
+input[type=date],input[type=time],input[type=text]{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px;font-size:16px;min-height:46px}
+.dayname{font-size:13px;color:var(--muted)}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 13px;font-size:14px;font-weight:500}
+.opt[aria-checked="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface));font-weight:600}
+.opt.col{display:inline-flex;align-items:center;gap:7px}
+.opt.col::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--c)}
+.opt.col[aria-checked="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) var(--tint),var(--surface))}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-weight:600;font-size:15px;padding:0 14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--crvena);flex:0 0 auto}
+.btn.danger.armed{background:var(--crvena);border-color:var(--crvena);color:#fff;flex:1}
+.err{color:var(--crvena);font-size:13px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top"><h1>Padel termini</h1>
+      <div class="tools">
+        <button type="button" class="tool" id="filterBtn" aria-label="Filteri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter<span class="badge" id="filterBadge" hidden></span></button>
+        <button type="button" class="tool" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>Izvoz</button>
+      </div></div>
+    <div class="fsum" id="fsum"><span id="count"></span><button type="button" id="clearBtn" hidden>Makni filtere</button></div>
+    <div class="legend" id="legend" aria-label="Filtriraj po boji"></div>
+    <div class="banner" id="notifBanner" hidden><span>Obavijesti su isključene pa podsjetnici neće stizati.</span><button type="button" id="notifBtn">Uključi</button></div>
+    <button class="pastbtn" id="pastBtn" hidden></button>
+  </header>
+  <main id="list"><div class="state"><b>Učitavam termine…</b>Tvoji termini pojavit će se ovdje.</div></main>
+  <p class="note" id="modeNote" hidden></p>
+</div>
+
+<button class="fab" id="addBtn" aria-label="Dodaj termin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Termin</button>
+
+<div class="scrim" id="scrim" hidden>
+  <form class="sheet" id="form" role="dialog" aria-modal="true" aria-labelledby="formTitle" novalidate>
+    <div class="grab"></div>
+    <h2 id="formTitle">Novi termin</h2>
+    <div class="two">
+      <div class="f"><label for="fDate">Datum</label><input type="date" id="fDate" required><span class="dayname" id="fDay"></span></div>
+      <div class="f"><label for="fTime">Vrijeme</label><input type="time" id="fTime" step="300"></div>
+    </div>
+    <div class="f"><span class="lbl" id="locLbl">Lokacija</span><div class="opts" role="radiogroup" aria-labelledby="locLbl" id="fLocs"></div>
+      <input type="text" id="fLocOther" placeholder="Upiši lokaciju" hidden></div>
+    <div class="f"><label for="fWho">Protivnici / napomena</label><input type="text" id="fWho" placeholder="npr. stipe/fran" autocomplete="off"></div>
+    <div class="f"><span class="lbl" id="tagLbl">Oznaka</span><div class="opts" role="radiogroup" aria-labelledby="tagLbl" id="fTags"></div></div>
+    <p class="err" id="fErr" hidden></p>
+    <div class="actions">
+      <button type="button" class="btn danger" id="delBtn" hidden>Obriši</button>
+      <button type="button" class="btn" id="cancelBtn">Odustani</button>
+      <button type="submit" class="btn primary" id="saveBtn">Spremi</button>
+    </div>
+  </form>
+</div>
+
+<div class="scrim" id="fScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="fTitle">
+    <div class="grab"></div>
+    <h2 id="fTitle">Filter</h2>
+    <div class="f"><span class="lbl" id="ftLbl">Oznaka</span><div class="opts" role="group" aria-labelledby="ftLbl" id="ffTags"></div></div>
+    <div class="f"><span class="lbl" id="flLbl">Centar</span><div class="opts" role="group" aria-labelledby="flLbl" id="ffLocs"></div></div>
+    <div class="two">
+      <div class="f"><label for="ffFrom">Od datuma</label><input type="date" id="ffFrom"></div>
+      <div class="f"><label for="ffTo">Do datuma</label><input type="date" id="ffTo"></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="ffClear">Očisti</button>
+      <button type="button" class="btn primary" id="ffDone">Prikaži</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="eScrim" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="eTitle">
+    <div class="grab"></div>
+    <h2 id="eTitle">Izvoz</h2>
+    <p class="ok" id="eInfo"></p>
+    <textarea class="exp" id="eText" readonly aria-label="Tekst za izvoz"></textarea>
+    <p class="ok" id="eMsg" aria-live="polite"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="eClose">Zatvori</button>
+      <button type="button" class="btn" id="eShare" hidden>Podijeli</button>
+      <button type="button" class="btn primary" id="eCopy">Kopiraj</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+// k = ključ spremljen u podacima (ne mijenjati zbog postojećih termina), c = boja
+const TAGS=[
+  {k:"plavo",c:"siva",label:"Slobodno"},
+  {k:"zeleno",c:"zelena",label:"Prijateljski"},
+  {k:"narancasto",c:"narancasta",label:"HPL liga"},
+  {k:"zlatno",c:"plava",label:"Rapsa liga"},
+  {k:"crveno",c:"crvena",label:"Otkazati"},
+  {k:"zuto",c:"zuta",label:"Dao nekom"}
+];
+const LOCS=["Padel.hr","PAZ","Embassy","Casa de Padel","Klara"];
+const DAYS=["ned","pon","uto","sri","čet","pet","sub"];
+const DAYS_FULL=["nedjelja","ponedjeljak","utorak","srijeda","četvrtak","petak","subota"];
+const tagOf=k=>TAGS.find(t=>t.k===k)||TAGS[0];
+const $=id=>document.getElementById(id);
+
+let items=[];        // {id,date,time,loc,who,tag}
+let tagSet=new Set(), locSet=new Set(), dFrom="", dTo="", showPast=false, loaded=false;
+const NOLOC="__none";
+let store=null;      // db collection or local fallback
+const LS="padel-termini-v1";
+
+function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parse(iso){const [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d)}
+function mondayOf(iso){const d=parse(iso);const off=(d.getDay()+6)%7;d.setDate(d.getDate()-off);return d}
+function dm(d){return d.getDate()+"."+(d.getMonth()+1)+"."}
+
+/* ---------- render ---------- */
+function renderLegend(){
+  const up=items.filter(i=>i.date>=todayISO());
+  const L=$("legend");L.textContent="";
+  TAGS.forEach(t=>{
+    const b=document.createElement("button");
+    b.className="chip";b.type="button";b.style.setProperty("--c",`var(--${t.c})`);
+    b.setAttribute("aria-pressed",tagSet.has(t.k)?"true":"false");
+    const n=up.filter(i=>i.tag===t.k).length;
+    b.innerHTML=`<span class="dot"></span><span></span><span class="n">${n}</span>`;
+    b.children[1].textContent=t.label;
+    b.onclick=()=>{toggle(tagSet,t.k);render()};
+    L.appendChild(b);
+  });
+}
+function render(){
+  renderLegend();
+  const today=todayISO();
+  const sorted=[...items].sort((a,b)=>(a.date+(a.time||"99")).localeCompare(b.date+(b.time||"99")));
+  const pastN=sorted.filter(i=>i.date<today).length;
+  const pb=$("pastBtn");
+  pb.hidden=pastN===0;
+  pb.textContent=showPast?`Sakrij prošle termine`:`Prikaži prošle termine (${pastN})`;
+  let view=sorted.filter(i=>showPast||i.date>=today);
+  view=applyFilters(view);
+  currentView=view;
+  const up=sorted.filter(i=>i.date>=today);
+  const nf=filterCount();
+  $("count").textContent=nf?`Prikazano ${view.length} od ${up.length}`:(up.length?`${up.length} nadolazećih`:"");
+  $("clearBtn").hidden=!nf;
+  $("filterBadge").hidden=!nf;$("filterBadge").textContent=nf;
+  const main=$("list");main.textContent="";
+  if(!loaded)return main.innerHTML=`<div class="state"><b>Učitavam termine…</b>Tvoji termini pojavit će se ovdje.</div>`;
+  if(!view.length){
+    main.innerHTML=filterCount()
+      ?`<div class="state"><b>Nema termina za ovaj filter</b>Promijeni filter ili dodirni „Makni filtere”.</div>`
+      :`<div class="state"><b>Još nema termina</b>Dodirni „Termin” dolje desno da dodaš prvi.</div>`;
+    return;
+  }
+  let lastWeek=null,list=null;
+  view.forEach(i=>{
+    const mon=mondayOf(i.date);const wk=mon.toDateString();
+    if(wk!==lastWeek){
+      lastWeek=wk;
+      const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+      const h=document.createElement("div");h.className="week";
+      h.textContent=`${dm(mon)} – ${dm(sun)}`;
+      main.appendChild(h);
+      list=document.createElement("div");list.className="list";main.appendChild(list);
+    }
+    const d=parse(i.date);const t=tagOf(i.tag);
+    const r=document.createElement("button");r.type="button";
+    r.className="row"+(i.date<today?" past":"")+(i.date===today?" today":"");
+    r.style.setProperty("--c",`var(--${t.c})`);
+    r.innerHTML=`<div class="d"><b></b><span></span></div><div class="t"></div><div class="m"><div class="who"></div><div class="meta"></div></div>`;
+    r.querySelector(".d b").textContent=dm(d);
+    r.querySelector(".d span").textContent=i.date===today?"danas":DAYS[d.getDay()];
+    r.querySelector(".t").textContent=i.time||"—";
+    const who=r.querySelector(".who");
+    if(i.who){who.textContent=i.who}else{who.textContent="bez napomene";who.classList.add("empty")}
+    const meta=r.querySelector(".meta");
+    if(i.loc){const s=document.createElement("span");s.className="loc";s.textContent=i.loc;meta.appendChild(s)}
+    const tg=document.createElement("span");tg.className="tag";tg.textContent=t.label;meta.appendChild(tg);
+    r.setAttribute("aria-label",`${DAYS_FULL[d.getDay()]} ${dm(d)} ${i.time||""} ${i.loc||""} ${i.who||""}, ${t.label}. Uredi`);
+    r.onclick=()=>openForm(i);
+    list.appendChild(r);
+  });
+}
+$("pastBtn").onclick=()=>{showPast=!showPast;render()};
+
+/* ---------- filters ---------- */
+let currentView=[];
+function toggle(set,v){set.has(v)?set.delete(v):set.add(v)}
+function filterCount(){return (tagSet.size?1:0)+(locSet.size?1:0)+(dFrom||dTo?1:0)}
+function applyFilters(list){
+  return list.filter(i=>
+    (!tagSet.size||tagSet.has(i.tag))&&
+    (!locSet.size||locSet.has(i.loc||NOLOC))&&
+    (!dFrom||i.date>=dFrom)&&(!dTo||i.date<=dTo));
+}
+function allLocs(){
+  const extra=[...new Set(items.map(i=>i.loc).filter(l=>l&&!LOCS.includes(l)))].sort();
+  return [...LOCS,...extra];
+}
+function buildFilterSheet(){
+  const T=$("ffTags");T.textContent="";
+  TAGS.forEach(t=>{
+    const b=document.createElement("button");b.type="button";b.className="opt col";
+    b.style.setProperty("--c",`var(--${t.c})`);b.textContent=t.label;
+    b.setAttribute("aria-checked",tagSet.has(t.k)?"true":"false");b.setAttribute("role","checkbox");
+    b.onclick=()=>{toggle(tagSet,t.k);buildFilterSheet();render()};
+    T.appendChild(b);
+  });
+  const L=$("ffLocs");L.textContent="";
+  [...allLocs().map(l=>[l,l]),[NOLOC,"Bez centra"]].forEach(([v,label])=>{
+    const b=document.createElement("button");b.type="button";b.className="opt";b.textContent=label;
+    b.setAttribute("aria-checked",locSet.has(v)?"true":"false");b.setAttribute("role","checkbox");
+    b.onclick=()=>{toggle(locSet,v);buildFilterSheet();render()};
+    L.appendChild(b);
+  });
+  $("ffFrom").value=dFrom;$("ffTo").value=dTo;
+}
+$("ffFrom").addEventListener("input",e=>{dFrom=e.target.value;render()});
+$("ffTo").addEventListener("input",e=>{dTo=e.target.value;render()});
+function clearFilters(){tagSet.clear();locSet.clear();dFrom="";dTo="";render()}
+$("filterBtn").onclick=()=>{buildFilterSheet();$("fScrim").hidden=false};
+$("ffDone").onclick=()=>{$("fScrim").hidden=true};
+$("ffClear").onclick=()=>{clearFilters();buildFilterSheet()};
+$("clearBtn").onclick=clearFilters;
+$("fScrim").addEventListener("click",e=>{if(e.target===$("fScrim"))$("fScrim").hidden=true});
+
+/* ---------- export ---------- */
+function exportLine(i){
+  const d=parse(i.date);
+  const head=`${dm(d)} ${DAYS_FULL[d.getDay()]}${i.time?" "+i.time+" h":""}`;
+  return [head,i.loc,i.who].filter(Boolean).join(" - ");
+}
+$("exportBtn").onclick=()=>{
+  const lines=currentView.map(exportLine);
+  $("eText").value=lines.join("\n");
+  $("eInfo").textContent=lines.length
+    ?`${lines.length} ${lines.length===1?"termin":"termina"}${filterCount()?" prema filteru":""}`
+    :"Nema termina za izvoz. Promijeni filter.";
+  $("eMsg").textContent="";
+  $("eShare").hidden=!(window.Android&&window.Android.shareText);
+  $("eScrim").hidden=false;
+};
+$("eClose").onclick=()=>{$("eScrim").hidden=true};
+$("eScrim").addEventListener("click",e=>{if(e.target===$("eScrim"))$("eScrim").hidden=true});
+$("eCopy").onclick=()=>{
+  const t=$("eText").value;
+  const done=()=>{$("eMsg").textContent="Kopirano. Zalijepi u Bilješke, WhatsApp ili gdje želiš."};
+  if(window.Android&&window.Android.copyText){window.Android.copyText(t);done();return}
+  const fallback=()=>{const ta=$("eText");ta.focus();ta.select();$("eMsg").textContent="Tekst je označen. Drži prst na njemu i odaberi Kopiraj."};
+  try{navigator.clipboard.writeText(t).then(done,fallback)}catch(e){fallback()}
+};
+$("eShare").onclick=()=>{window.Android&&window.Android.shareText($("eText").value)};
+
+/* ---------- form ---------- */
+let editing=null, fLoc="", fTag="plavo", delArmed=false;
+let draft=null;      // zapamćen unos novog termina nakon zatvaranja povlačenjem
+function buildOpts(){
+  const L=$("fLocs");L.textContent="";
+  [...LOCS,"Drugo"].forEach(name=>{
+    const b=document.createElement("button");b.type="button";b.className="opt";b.setAttribute("role","radio");
+    b.textContent=name;b.dataset.v=name;
+    b.onclick=()=>{
+      if(name==="Drugo"){fLoc=fLoc&&!LOCS.includes(fLoc)?fLoc:"__other"}else{fLoc=fLoc===name?"":name}
+      syncOpts();
+      if(name==="Drugo")$("fLocOther").focus();
+    };
+    L.appendChild(b);
+  });
+  const T=$("fTags");T.textContent="";
+  TAGS.forEach(t=>{
+    const b=document.createElement("button");b.type="button";b.className="opt col";b.setAttribute("role","radio");
+    b.style.setProperty("--c",`var(--${t.c})`);b.textContent=t.label;b.dataset.v=t.k;
+    b.onclick=()=>{fTag=t.k;syncOpts()};
+    T.appendChild(b);
+  });
+}
+function syncOpts(){
+  const other=fLoc&&!LOCS.includes(fLoc);
+  $("fLocs").querySelectorAll(".opt").forEach(b=>{
+    const on=b.dataset.v==="Drugo"?!!other:b.dataset.v===fLoc;
+    b.setAttribute("aria-checked",on?"true":"false");
+  });
+  $("fLocOther").hidden=!other;
+  $("fTags").querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-checked",b.dataset.v===fTag?"true":"false"));
+}
+function showDay(){const v=$("fDate").value;$("fDay").textContent=v?DAYS_FULL[parse(v).getDay()]:""}
+$("fDate").addEventListener("input",showDay);
+function openForm(item){
+  editing=item||null;delArmed=false;
+  $("formTitle").textContent=item?"Uredi termin":"Novi termin";
+  const d=item?null:draft;
+  if(d){
+    $("fDate").value=d.date;$("fTime").value=d.time;fLoc=d.loc;
+    $("fLocOther").value=d.locOther;$("fWho").value=d.who;fTag=d.tag;
+  }else{
+    $("fDate").value=item?item.date:todayISO();
+    $("fTime").value=item?(item.time||""):"19:30";
+    fLoc=item?(item.loc||""):"";
+    $("fLocOther").value=fLoc&&!LOCS.includes(fLoc)?fLoc:"";
+    $("fWho").value=item?(item.who||""):"";
+    fTag=item?item.tag:(tagSet.size===1?[...tagSet][0]:"plavo");
+  }
+  $("delBtn").hidden=!item;$("delBtn").classList.remove("armed");$("delBtn").textContent="Obriši";
+  $("fErr").hidden=true;
+  showDay();syncOpts();
+  $("scrim").hidden=false;
+}
+function closeForm(){$("scrim").hidden=true;editing=null}
+function readForm(){return{date:$("fDate").value,time:$("fTime").value,loc:fLoc,locOther:$("fLocOther").value,who:$("fWho").value,tag:fTag}}
+// Povlačenje dolje / tap izvan / natrag: zatvori, ali zapamti unos novog termina
+function dismissForm(){if(!editing)draft=readForm();closeForm()}
+// Odustani: zatvori i zaboravi unos
+function cancelForm(){if(!editing)draft=null;closeForm()}
+$("addBtn").onclick=()=>openForm(null);
+$("cancelBtn").onclick=cancelForm;
+$("scrim").addEventListener("click",e=>{if(e.target===$("scrim"))dismissForm()});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("scrim").hidden)dismissForm();$("fScrim").hidden=true;$("eScrim").hidden=true});
+function fail(msg){$("fErr").textContent=msg;$("fErr").hidden=false}
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!store)return fail("Termini se još učitavaju. Pokušaj za trenutak.");
+  const date=$("fDate").value;
+  if(!date)return fail("Odaberi datum.");
+  let loc=fLoc;
+  if(loc&&!LOCS.includes(loc))loc=$("fLocOther").value.trim();
+  const data={date,time:$("fTime").value||"",loc:loc||"",who:$("fWho").value.trim(),tag:fTag};
+  try{
+    if(editing)await store.save(editing.id,data);else{await store.add(data);draft=null}
+    closeForm();
+  }catch(err){fail("Spremanje nije uspjelo. Provjeri vezu i pokušaj ponovno.")}
+});
+$("delBtn").onclick=async()=>{
+  if(!delArmed){delArmed=true;$("delBtn").classList.add("armed");$("delBtn").textContent="Sigurno obriši";return}
+  try{await store.remove(editing.id);closeForm()}catch(err){fail("Brisanje nije uspjelo. Pokušaj ponovno.")}
+};
+
+/* ---------- storage ---------- */
+function localStore(){
+  const read=()=>{try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch(e){return[]}};
+  const write=a=>{try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}};
+  const sync=()=>{const a=read(),t=todayISO(),k=a.filter(i=>i.date>=t);if(k.length!==a.length)write(k);items=k;loaded=true;render()};
+  return{
+    add:async d=>{const a=read();a.push({...d,id:"l"+Date.now().toString(36)});write(a);sync()},
+    save:async(id,d)=>{write(read().map(i=>i.id===id?{...d,id}:i));sync()},
+    remove:async id=>{write(read().filter(i=>i.id!==id));sync()},
+    start:sync
+  };
+}
+function nativeStore(){
+  const read=()=>{try{return JSON.parse(window.Android.load())||[]}catch(e){return[]}};
+  const write=a=>window.Android.save(JSON.stringify(a));
+  const sync=()=>{const a=read(),t=todayISO(),k=a.filter(i=>i.date>=t);if(k.length!==a.length)write(k);items=k;loaded=true;render()};
+  return{
+    add:async d=>{const a=read();a.push({...d,id:"l"+Date.now().toString(36)});write(a);sync()},
+    save:async(id,d)=>{write(read().map(i=>i.id===id?{...d,id}:i));sync()},
+    remove:async id=>{write(read().filter(i=>i.id!==id));sync()},
+    start:sync
+  };
+}
+function note(t){const n=$("modeNote");n.textContent=t;n.hidden=false}
+function checkNotif(){
+  const on=window.Android?window.Android.notificationsOn():true;
+  $("notifBanner").hidden=on;
+}
+$("notifBtn").onclick=()=>window.Android&&window.Android.openNotificationSettings();
+window.onAppResume=()=>{checkNotif();if(loaded&&$("scrim").hidden)render()};
+window.handleBack=()=>{if(!$("scrim").hidden){dismissForm();return true}if(!$("fScrim").hidden){$("fScrim").hidden=true;return true}if(!$("eScrim").hidden){$("eScrim").hidden=true;return true}return false};
+
+/* ---------- swipe down to close ---------- */
+function swipeToClose(scrim,onClose){
+  const sheet=scrim.querySelector(".sheet");
+  let y0=0,x0=0,dy=0,lastY=0,lastT=0,vy=0,track=false,drag=false;
+  const reset=()=>{sheet.style.transition="";sheet.style.transform="";scrim.style.backgroundColor=""};
+  sheet.addEventListener("touchstart",e=>{
+    track=e.touches.length===1&&sheet.scrollTop<=0&&!e.target.closest("textarea");
+    if(!track)return;
+    drag=false;dy=0;vy=0;
+    y0=e.touches[0].clientY;x0=e.touches[0].clientX;lastY=0;lastT=e.timeStamp;
+  },{passive:true});
+  sheet.addEventListener("touchmove",e=>{
+    if(!track)return;
+    const mY=e.touches[0].clientY-y0,mX=e.touches[0].clientX-x0;
+    if(!drag){
+      if(Math.abs(mY)<8&&Math.abs(mX)<8)return;
+      if(mY<=0||Math.abs(mX)>mY||sheet.scrollTop>0){track=false;return}
+      drag=true;sheet.classList.add("dragging");
+      const a=document.activeElement;if(a&&sheet.contains(a))a.blur();
+    }
+    e.preventDefault();
+    vy=(mY-lastY)/Math.max(1,e.timeStamp-lastT);lastY=mY;lastT=e.timeStamp;
+    dy=Math.max(0,mY);
+    sheet.style.transform=`translateY(${dy}px)`;
+    scrim.style.backgroundColor=`rgba(0,0,0,${(.42*Math.max(0,1-dy/sheet.offsetHeight)).toFixed(3)})`;
+  },{passive:false});
+  const end=()=>{
+    if(!track)return;track=false;
+    if(!drag)return;drag=false;sheet.classList.remove("dragging");
+    const close=dy>Math.min(120,sheet.offsetHeight*.25)||(vy>.5&&dy>30);
+    sheet.style.transition="transform .18s ease-out";
+    if(close){
+      sheet.style.transform="translateY(100%)";scrim.style.backgroundColor="rgba(0,0,0,0)";
+      setTimeout(()=>{onClose();reset()},180);
+    }else{
+      sheet.style.transform="";scrim.style.backgroundColor="";
+      setTimeout(reset,180);
+    }
+  };
+  sheet.addEventListener("touchend",end);
+  sheet.addEventListener("touchcancel",end);
+}
+swipeToClose($("scrim"),dismissForm);
+swipeToClose($("fScrim"),()=>{$("fScrim").hidden=true});
+swipeToClose($("eScrim"),()=>{$("eScrim").hidden=true});
+
+buildOpts();render();
+if(window.Android){store=nativeStore();checkNotif()}
+else{store=localStore();note("Pregled u pregledniku: termini se spremaju samo ovdje.")}
+store.start();
+})();
+</script>
+</body>
+</html>

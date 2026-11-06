@@ -1,0 +1,12 @@
+* text=auto
+
+# Skripte moraju imati ispravne završetke redaka za svoj sustav
+gradlew text eol=lf
+*.sh    text eol=lf
+*.bat   text eol=crlf
+
+# Binarne datoteke
+*.jar   binary
+*.png   binary
+*.webp  binary
+*.jks   binary

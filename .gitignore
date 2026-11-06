@@ -1,0 +1,35 @@
+# Gradle
+.gradle/
+build/
+.kotlin/
+
+# Lokalne postavke (putanja do SDK-a, specifično za računalo)
+local.properties
+
+# Android Studio / IntelliJ
+*.iml
+.idea/*
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Izlazni build artefakti
+*.apk
+*.aab
+*.ap_
+*.dex
+output-metadata.json
+
+# Ključevi za potpisivanje – nikad u git
+*.jks
+*.keystore
+keystore.properties
+
+# Logovi i sistemske datoteke
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

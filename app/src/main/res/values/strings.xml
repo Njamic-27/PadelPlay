@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Padel termini</string>
+    <string name="channel_name">Podsjetnici za termine</string>
+    <string name="channel_desc">Dan prije i sat prije termina</string>
+</resources>

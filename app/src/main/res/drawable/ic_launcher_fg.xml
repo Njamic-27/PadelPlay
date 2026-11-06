@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Padel racket with ball, drawn inside the 66dp safe zone of a 108dp adaptive icon -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:rotation="-35" android:pivotX="54" android:pivotY="54">
+        <!-- handle -->
+        <path
+            android:fillColor="@color/icon_fg"
+            android:pathData="M50,62 L58,62 L58,82 Q58,85 55,85 L53,85 Q50,85 50,82 Z" />
+        <!-- head with holes (evenOdd cuts the holes out) -->
+        <path
+            android:fillColor="@color/icon_fg"
+            android:fillType="evenOdd"
+            android:pathData="M54,22 C66,22 72,31 72,42 C72,54 64,64 54,64 C44,64 36,54 36,42 C36,31 42,22 54,22 Z
+                M47,34 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z
+                M56.6,34 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z
+                M42.6,42 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z
+                M51.8,42 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z
+                M61,42 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z
+                M47,50 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z
+                M56.6,50 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z" />
+    </group>
+    <!-- ball -->
+    <path
+        android:fillColor="@color/icon_ball"
+        android:pathData="M68,70 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
+</vector>
