@@ -168,7 +168,7 @@ public class MainActivity extends Activity {
         public void copyText(String text) {
             runOnUiThread(() -> {
                 ClipboardManager cm = getSystemService(ClipboardManager.class);
-                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Padel termini", text));
+                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("PadelPlay", text));
             });
         }
 
@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
         public void shareText(String text) {
             Intent send = new Intent(Intent.ACTION_SEND)
                     .setType("text/plain")
-                    .putExtra(Intent.EXTRA_SUBJECT, "Padel termini")
+                    .putExtra(Intent.EXTRA_SUBJECT, "PadelPlay")
                     .putExtra(Intent.EXTRA_TEXT, text);
             runOnUiThread(() -> {
                 try { startActivity(Intent.createChooser(send, "Podijeli termine")); } catch (Exception ignored) {}

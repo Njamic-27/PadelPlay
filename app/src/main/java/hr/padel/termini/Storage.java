@@ -39,7 +39,7 @@ final class Storage {
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_REM, json).apply();
     }
 
-    /** First start: the termini copied from the notepad. */
+    /** First start: optional starter data from assets/seed.json (empty by default). */
     private static String readSeed(Context c) {
         try (InputStream in = c.getAssets().open("seed.json")) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();

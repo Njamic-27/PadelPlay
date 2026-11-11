@@ -1,9 +1,9 @@
-# Padel termini – kako dobiti APK
+# PadelPlay – kako dobiti APK
 
 1. Skini i instaliraj **Android Studio** (besplatno): https://developer.android.com/studio
    Kod prvog pokretanja ostavi sve na „Standard” i pusti ga da skine što treba.
-2. Otpakiraj ovaj zip, npr. u `Dokumenti\PadelTermini`.
-3. U Android Studiju: **File → Open**, odaberi mapu `PadelTermini` (onu u kojoj je ova datoteka) → **Trust Project**.
+2. Kloniraj repozitorij (`git clone https://github.com/Njamic-27/PadelPlay.git`) ili ga skini kao ZIP i otpakiraj.
+3. U Android Studiju: **File → Open**, odaberi mapu `PadelPlay` (onu u kojoj je ova datoteka) → **Trust Project**.
 4. Pričekaj da dolje nestane „Gradle sync” traka (prvi put par minuta, skida alate).
    Ako ponudi „Upgrade” ili „AGP Upgrade Assistant”, slobodno klikni da – ili ignoriraj, radi i ovako.
 5. Gornji izbornik: **Build → Generate App Bundles or APKs → Generate APKs**
@@ -20,7 +20,7 @@
 - Žuti termini („Dao nekom”) nemaju podsjetnike.
 - Crveni („Otkazati”) imaju podsjetnik koji kaže da trebaš otkazati.
 - Na dnu liste je gumb „Pošalji probnu obavijest” da vidiš rade li obavijesti.
-- Ako obavijesti kasne, u postavkama mobitela za aplikaciju „Padel termini” isključi
+- Ako obavijesti kasne, u postavkama mobitela za aplikaciju „PadelPlay” isključi
   ograničenje baterije (Baterija → Bez ograničenja). Neki Xiaomi/Huawei/Samsung mobiteli to traže.
 
 ## Napomena
